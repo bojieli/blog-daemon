@@ -305,7 +305,8 @@ def set_3rdparty_domain(request):
         if is_ssl:
             listen_443 = '''
             listen 443;
-            listen [::]:443;'''
+            listen [::]:443;
+            include conf.d/redirect2https.inc;'''
             ssl_cert = '''
             ssl_certificate     /etc/nginx/blog-keys/{0}.crt;
             ssl_certificate_key /etc/nginx/blog-keys/{0}.key;'''.format(appname)
