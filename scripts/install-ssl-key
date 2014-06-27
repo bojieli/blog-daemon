@@ -1,0 +1,27 @@
+#!/bin/bash
+
+[ -z "$1" ] && exit 1
+[ -z "$2" ] && exit 2
+username=$1
+domain=$2
+
+BLOG_KEYDIR=/etc/nginx/blog-keys
+TMP_KEYDIR=/tmp/uploaded-keys/$1
+[ -d "$TMP_KEYDIR" ] || exit 100
+cd $TMP_KEYDIR || exit 100
+
+modkey=$(openssl rsa -noout -modulus -in ssl.key) || exit 101
+modcrt=$(openssl x509 -noout -modulus -in ssl.crt) || exit 102
+[ "$modkey" = "$modcrt" ] || exit 103
+
+openssl verify -CApath /etc/ssl/certs/ intermediate.crt || exit 104
+openssl verify -CAfile intermediate.crt -purpose sslserver ssl.crt || exit 105
+
+wildcard_domain="*.${domain#*.}"
+grepvar=$(echo "DNS:\\($domain\|$wildcard_domain\\)" | sed 's/\./\\./g' | sed 's/\*/\\*/g')
+(openssl x509 -certopt no_subject,no_header,no_version,no_serial,no_signame,no_validity,no_subject,no_issuer,no_pubkey,no_sigdump,no_aux -text -noout -in ssl.crt | grep "$grepvar") || exit 106
+
+cat ssl.crt intermediate.crt >$BLOG_KEYDIR/$username.crt || exit 107
+cat ssl.key >$BLOG_KEYDIR/$username.key || exit 108
+
+exit 0

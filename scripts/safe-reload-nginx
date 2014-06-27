@@ -1,0 +1,3 @@
+#!/bin/bash
+[ `whoami` != "root" ] && exit 1
+/usr/sbin/nginx -t && /etc/init.d/nginx reload
