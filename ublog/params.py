@@ -20,11 +20,16 @@ _p['path.user.plugin']		= lambda appname, plugin:	os.path.join(get_param('path.u
 _p['path.user.theme.base']	= lambda appname:		os.path.join(get_param('path.user', appname=appname), 'wp-content/themes')
 _p['path.user.theme']		= lambda appname, theme:	os.path.join(get_param('path.user.theme.base', appname=appname), theme)
 _p['path.user.upload']		= lambda appname:		os.path.join(get_param('path.user', appname=appname), 'wp-content/uploads')
+_p['path.nginx.config']         = '/etc/nginx/autogen-conf-blog'
 _p['url.plugin.base']		= 'http://downloads.wordpress.org/plugin/'
 _p['url.theme.base']		= 'http://wordpress.org/extend/themes/download/'
 _p['action.sendmail.from']	= 'noreply@blog.ustc.edu.cn'
 _p['action.sendmail.server'] = 'localhost'
 _p['async.post.url']		= 'http://127.0.0.1:10000/callback.php'
+
+_p['script.base']               = '/opt/ustcblog/blog-daemon/scripts'
+_p['script.nginx.reload']       = _p['script.base'] + '/safe-reload-nginx'
+_p['script.sslkey.install']     = _p['script.base'] + '/install-ssl-key'
 
 _p['handler.worker-pool-async.size']	= 10
 

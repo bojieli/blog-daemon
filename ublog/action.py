@@ -63,6 +63,9 @@ class Action(object):
         if result is None:
             result = dict(status = '0')
 
+        if isinstance(result, int):
+            result = dict(status = str(result))
+
         if isinstance(result, dict):
             try:
                 result = str(ublog.request.StructedDict(result))
@@ -288,3 +291,78 @@ def sendmail(request):
     server.sendmail(mail_from, [mail_to], msg.as_string())
     server.quit()
     
+@daction('set-3rdparty-domain')
+def set_3rdparty_domain(request):
+    appname     = request.appname
+    domain_name = request.args['domain']
+    is_ssl      = bool(int(request.args['is_ssl']))
+    if not re.search(r'^[a-z\d-]{,63}$', appname):
+        return 1
+    if not re.search(r'^[a-z\d-]{,63}(\.[a-z\d-]{,63})+$', domain_name):
+        return 2
+    try:
+        conf = open(get_param('path.nginx.config') + '/' + appname, 'w')
+        if is_ssl:
+            listen_443 = '''
+            listen 443;
+            listen [::]:443;'''
+            ssl_cert = '''
+            ssl_certificate     /etc/nginx/blog-keys/{0}.crt;
+            ssl_certificate_key /etc/nginx/blog-keys/{0}.key;'''.format(appname)
+        else:
+            listen_443 = ''
+            ssl_cert = ''
+
+        # warning: special chars '{' and '}' need to be escaped
+        conf.write('''
+        server {{
+            listen 80;
+            listen [::]:80;
+            {2}
+
+            server_name {1};
+            
+            {3}
+
+            access_log /var/log/nginx/blog/access.log logverbose;
+            error_log  /var/log/nginx/blog/error.log;
+
+            location / {{
+                proxy_pass $scheme://127.0.0.1;
+                proxy_set_header Host            {0}.blog.ustc.edu.cn;
+                proxy_set_header X-Original-Host $http_host;
+            }}
+        }}
+        '''.format(appname, domain_name, listen_443, ssl_cert))
+        conf.close()
+    except Exception, e:
+        print Exception, e
+        return 3
+
+    try:
+        # os.system return value is (process return value << 8) 
+        status = os.system('sudo ' + get_param('script.nginx.reload')) >> 8
+        if status != 0:
+            return 4
+    except Exception, e:
+	print Exception, e
+        return 4
+    return 0
+
+@daction('install-ssl-key')
+def install_ssl_key(request):
+    appname     = request.appname
+    domain_name = request.args['domain']
+    if not re.search(r'^[a-z\d-]{,63}$', appname):
+        return 1
+    if not re.search(r'^[a-z\d-]{,63}(\.[a-z\d-]{,63})+$', domain_name):
+        return 2
+    try:
+        status = os.system(get_param('script.sslkey.install') + ' ' + appname + ' ' + domain_name) >> 8
+        if status != 0:
+            return status
+    except Exception, e:
+	print Exception, e
+        return 3
+    return 0
+
