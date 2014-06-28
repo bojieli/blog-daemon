@@ -23,5 +23,6 @@ grepvar=$(echo "DNS:\\($domain\|$wildcard_domain\\)" | sed 's/\./\\./g' | sed 's
 
 cat ssl.crt intermediate.crt >$BLOG_KEYDIR/$username.crt || exit 107
 cat ssl.key >$BLOG_KEYDIR/$username.key || exit 108
+rm -f $TMP_KEYDIR/*
 
 exit 0
