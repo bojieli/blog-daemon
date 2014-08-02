@@ -21,9 +21,9 @@ wildcard_domain="*.${domain#*.}"
 grepvar=$(echo "DNS:\\($domain\|$wildcard_domain\\)" | sed 's/\./\\./g' | sed 's/\*/\\*/g')
 (openssl x509 -certopt no_subject,no_header,no_version,no_serial,no_signame,no_validity,no_subject,no_issuer,no_pubkey,no_sigdump,no_aux -text -noout -in ssl.crt | grep "$grepvar") || exit 106
 
-cat ssl.crt >$KEYDIR/$username.crt || exit 107
-echo "" >>$KEYDIR/$username.crt || exit 107  # in case no CRLF after first crt
-cat intermediate.crt >>$KEYDIR/$username.crt || exit 107
+cat ssl.crt >$BLOG_KEYDIR/$username.crt || exit 107
+echo "" >>$BLOG_KEYDIR/$username.crt || exit 107  # in case no CRLF after first crt
+cat intermediate.crt >>$BLOG_KEYDIR/$username.crt || exit 107
 
 cat ssl.key >$BLOG_KEYDIR/$username.key || exit 108
 rm -f $TMP_KEYDIR/*
