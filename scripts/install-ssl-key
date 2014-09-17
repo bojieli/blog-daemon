@@ -14,8 +14,7 @@ modkey=$(openssl rsa -noout -modulus -in ssl.key) || exit 101
 modcrt=$(openssl x509 -noout -modulus -in ssl.crt) || exit 102
 [ "$modkey" = "$modcrt" ] || exit 103
 
-openssl verify -CApath /etc/ssl/certs/ intermediate.crt || exit 104
-openssl verify -CAfile intermediate.crt -purpose sslserver ssl.crt || exit 105
+openssl verify -CApath /etc/ssl/certs/ -purpose sslserver -untrusted intermediate.crt ssl.crt || exit 104
 
 wildcard_domain="*.${domain#*.}"
 grepvar=$(echo "DNS:\\($domain\|$wildcard_domain\\)" | sed 's/\./\\./g' | sed 's/\*/\\*/g')
