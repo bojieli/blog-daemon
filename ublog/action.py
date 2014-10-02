@@ -332,6 +332,8 @@ def set_3rdparty_domain(request):
                 proxy_pass $scheme://127.0.0.1;
                 proxy_set_header Host            {0}.blog.ustc.edu.cn;
                 proxy_set_header X-Original-Host $http_host;
+                proxy_redirect https://{0}.blog.ustc.edu.cn https://{1};
+                proxy_redirect http://{0}.blog.ustc.edu.cn  http://{1};
             }}
         }}
         '''.format(appname, domain_name, listen_443, ssl_cert))
