@@ -321,7 +321,7 @@ def set_3rdparty_domain(request):
             listen [::]:80;
             {2}
 
-            server_name {1};
+            server_name *.{1} {1};
             
             {3}
 
