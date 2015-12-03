@@ -35,7 +35,7 @@ _action_execute_map = dict()
 
 def default_action(request):
     raise ue.UnknownError
-    
+
 
 def add_action(action, executor):
     assert isinstance(action, str)
@@ -75,7 +75,7 @@ class Action(object):
         if not isinstance(result, str):
             result = '*Unknown Result'
         return result
-    
+
 def _get_action(action):
     assert isinstance(action, str)
     if action in _action_execute_map:
@@ -104,7 +104,7 @@ def _http_request(url, method, post_data=None):
         uc = urllib2.urlopen( url, post_data, get_param('action.http.timeout') )
         data = uc.read(ublog.params.get_param('action.http.max_response_size'))
         if uc.read(1) != '':
-            raise ue.UnknownError("response too long")        
+            raise ue.UnknownError("response too long")
     except urllib2.HTTPError as e:
         return {'status': str(e.code), 'data': ''}
     finally:
@@ -169,7 +169,7 @@ def install_blog_filesystem(request):
     s = "<?php\n" + ''.join(["define({0} '{1}');\n".format(kc, ublog.utils.random_string(64)) for kc in keyscomma]) + "?>\n"
     with io.open(get_param('path.user.wp.config', appname=appname), 'wb') as f:
         f.write(s)
-        
+
 
 PLUGIN_NAME_RE = re.compile('^[-0-9a-zA-Z._]+$')
 PLUGIN_FILENAME_RE = re.compile('^[-0-9a-zA-Z._]+\.zip$')
@@ -290,7 +290,7 @@ def sendmail(request):
     server = smtplib.SMTP(get_param('action.sendmail.server'))
     server.sendmail(mail_from, [mail_to], msg.as_string())
     server.quit()
-    
+
 @daction('set-3rdparty-domain')
 def set_3rdparty_domain(request):
     appname     = request.appname
@@ -304,8 +304,7 @@ def set_3rdparty_domain(request):
         conf = open(get_param('path.nginx.config') + '/' + appname, 'w')
         if is_ssl:
             listen_443 = '''
-            listen 443;
-            listen [::]:443;
+            include /etc/nginx/proxy_listen_https;
             include conf.d/redirect2https.inc;'''
             ssl_cert = '''
             ssl_certificate     /etc/nginx/blog-keys/{0}.crt;
@@ -317,12 +316,11 @@ def set_3rdparty_domain(request):
         # warning: special chars '{' and '}' need to be escaped
         conf.write('''
         server {{
-            listen 80;
-            listen [::]:80;
+            include /etc/nginx/proxy_listen_http;
             {2}
 
             server_name *.{1} {1};
-            
+
             {3}
 
             access_log /var/log/nginx/blog/access.log logverbose;
@@ -345,7 +343,7 @@ def set_3rdparty_domain(request):
         return 3
 
     try:
-        # os.system return value is (process return value << 8) 
+        # os.system return value is (process return value << 8)
         status = os.system('sudo ' + get_param('script.nginx.reload')) >> 8
         if status != 0:
             return 4
