@@ -304,7 +304,7 @@ def set_3rdparty_domain(request):
         conf = open(get_param('path.nginx.config') + '/' + appname, 'w')
         if is_ssl:
             listen_443 = '''
-            include /etc/nginx/proxy_listen_https;
+            include conf.d/proxy_listen_https;
             include conf.d/redirect2https.inc;'''
             ssl_cert = '''
             ssl_certificate     /etc/nginx/blog-keys/{0}.crt;
@@ -316,7 +316,7 @@ def set_3rdparty_domain(request):
         # warning: special chars '{' and '}' need to be escaped
         conf.write('''
         server {{
-            include /etc/nginx/proxy_listen_http;
+            include conf.d/proxy_listen_http;
             {2}
 
             server_name *.{1} {1};
