@@ -6,9 +6,26 @@ username=$1
 domain=$2
 
 BLOG_KEYDIR=/etc/nginx/blog-keys
-TMP_KEYDIR=/tmp/uploaded-keys/$1
+TMP_KEYDIR=/tmp/uploaded-keys/$username
 [ -d "$TMP_KEYDIR" ] || exit 100
 cd $TMP_KEYDIR || exit 100
+
+LETSENCRYPT_DIR=/opt/letsencrypt
+LETSENCRYPT_ARCHIVE_DIR=/etc/letsencrypt/live
+LETSENCRYPT_RENEWAL_DIR=/etc/letsencrypt/renewal
+
+if [ -f "APPLY_FOR_LETSENCRYPT" ]; then
+	[ -f "${domain}.conf" ] || exit 200
+	# if exists, do not apply again
+	if [ ! -f "${LETSENCRYPT_RENEWAL_DIR}/${domain}.conf" ]; then
+		# apply for the certificate
+		${LETSENCRYPT_DIR}/letsencrypt-auto --config ${domain}.conf certonly || exit 201
+	fi
+	# copy certificate to current dir
+	sudo cp --copy-contents ${LETSENCRYPT_ARCHIVE_DIR}/${domain}/cert.pem    ssl.crt 		|| exit 202
+	sudo cp --copy-contents ${LETSENCRYPT_ARCHIVE_DIR}/${domain}/privkey.pem ssl.key 		|| exit 202
+	sudo cp --copy-contents ${LETSENCRYPT_ARCHIVE_DIR}/${domain}/chain.pem   intermediate.crt 	|| exit 202
+fi
 
 modkey=$(openssl rsa -noout -modulus -in ssl.key) || exit 101
 modcrt=$(openssl x509 -noout -modulus -in ssl.crt) || exit 102
