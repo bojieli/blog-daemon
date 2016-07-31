@@ -1,0 +1,35 @@
+#!/bin/bash
+LETSENCRYPT_DIR=/opt/letsencrypt
+BLOG_KEYDIR=/etc/nginx/blog-keys
+LETSENCRYPT_ARCHIVE_DIR=/etc/letsencrypt/live
+LETSENCRYPT_RENEWAL_DIR=/etc/letsencrypt/renewal
+
+${LETSENCRYPT_DIR}/letsencrypt-auto renew || exit 1
+
+ls ${LETSENCRYPT_RENEWAL_DIR} | while read filename; do
+	domain=${filename%%.conf}
+	echo "Checking $domain"
+	ls $BLOG_KEYDIR/*.crt | while read oldcrtfile; do
+		oldkeyfile=${oldcrtfile%%.crt}.key
+		[[ -f "$oldkeyfile" ]] || continue
+
+		# must match the domain
+		old_subject=$(openssl x509 -noout -subject -in $oldcrtfile)
+		contains=$(echo $old_subject | grep "CN=$domain\$")
+		[[ $contains == "" ]] && continue
+
+		# must be issued by Let's Encrypt CA
+		old_issuer=$(openssl x509 -noout -issuer -in $oldcrtfile)
+		contains=$(echo $old_issuer | grep "Let's Encrypt")
+		[[ $contains == "" ]] && continue
+
+		# copy certificate to current dir
+		cp --copy-contents ${LETSENCRYPT_ARCHIVE_DIR}/${domain}/fullchain.pem $oldcrtfile
+		cp --copy-contents ${LETSENCRYPT_ARCHIVE_DIR}/${domain}/privkey.pem   $oldkeyfile
+		echo "Updated $domain"
+	done
+done
+
+$(dirname $0)/safe-reload-nginx
+
+exit 0
